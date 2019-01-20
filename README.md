@@ -3,4 +3,4 @@ SpringMVC是Spring为展现层提供的基于 MVC 设计理念的优秀的Web框
 求的控制器，而无须实现任何接口。且支持 REST 风格的 URL 请求
 * [官方文档](https://docs.spring.io/spring/docs/4.3.22.RELEASE/spring-framework-reference/htmlsingle/)
 * [HelloWorld](https://github.com/Ywfy/Learning-summary-for-SpringMVC/tree/master/HelloWorld)
-* [RequestMapping详解]()
+* [RequestMapping]()
