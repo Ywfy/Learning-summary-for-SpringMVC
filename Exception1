@@ -1,4 +1,4 @@
 # jsp报错:The superclass "javax.servlet.http.HttpServlet" was not found on the Java Build Path的解决方法
 这种情况一般是导入别人的项目时，会出现的，是由于jre和Tomcat的配置问题<br>
 只需要右键项目===>properties===>Java Build Path===>Libraries
-Remove掉错误的jre版本，添加进自己本机的jre版本，和Tomcat 就行了
+Remove掉错误的jre版本，添加进自己本机的jre版本，和runtime sever ===> Tomcat 就行了
