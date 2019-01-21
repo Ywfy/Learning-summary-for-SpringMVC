@@ -547,5 +547,178 @@ list.jsp:
 ![图片无法加载](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/jsr303.jpg)<br><br>
 * JSR303只是一个标准，Hibernate Validator 是 JSR 303 的一个参考实现,除支持所有标准的校验注解外，它还支持以下的扩展注解<br>
 ![图片无法加载](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/ha.png)<br><br>
+* <strong>使用流程:</strong>
+### 1)、引入jar包
+```
+validation-api-1.1.0.CR1.jar
+hibernate-validator-5.0.0.CR2.jar
+hibernate-validator-annotation-processor-5.0.0.CR2.jar
+```
 
+### 2)、在SpringMVC配置文件中添加<mvc:annotation-driven></mvc:annotation-driven>
+### 3)、需要在bean的属性上添加对应的注解
+```
+public class Employee {
+
+	private Integer id;
+	@NotEmpty
+	private String lastName;
+
+	@Email
+	private String email;
+	//1 male, 0 female
+	private Integer gender;
+	
+	private Department department;
+	
+	@Past
+	@DateTimeFormat(pattern="yyyy-MM-dd")
+	private Date birth;
+	
+	@NumberFormat(pattern="#,###,###.#")
+	private Float salary;
+
+	......
+```
+
+### 4)、在目标方法bean类型的前面添加@Valid注解,并在随后添加一个BindingResult或者error对象
+在处理方法对应的入参前添加 @Valid，Spring MVC 就会实施校验并将校验结果保存在被校验入参对象之后的 BindingResult 或Errors 入参中<br>
+注意:需校验的Bean对象和其绑定结果对象(BindingResult)或错误对象(error)是成对出现的，它们中间不允许声明其他的入参<br>
+
+BindingResult类型对象有以下常用方法：
+* FieldError getFieldError(String field)
+* List<FieldError> getFieldErrors()
+* Object getFieldValue(String field)
+* Int getErrorCount()
+<br>
+	
+修改EmployeeHandler:
+```
+@RequestMapping(value= {"/emp"}, method=RequestMethod.POST)
+	public String save(@Valid Employee employee, BindingResult result,
+			Map<String, Object> map) {
+		System.out.println("save: " + employee);
+		
+		if(result.getErrorCount() > 0) {
+			System.out.println("出错了");
+			for(FieldError error:result.getFieldErrors()) {
+				System.out.println(error.getField() + ":" + error.getDefaultMessage());
+			}
+			
+			//若验证出错，则转向定制的页面
+			map.put("departments", departmentDao.getDepartments());
+			return "input";
+		}
+		employeeDao.save(employee);
+		return "redirect:/emps";
+	}
+```
+以上虽然已经完成了验证，但是验证出错信息却是打印在控制台，我们希望将错误信息实时地显示在页面上
+### 5)、错误信息实时打印在页面上
+Spring MVC 除了会将表单/命令对象的校验结果保存到对应的 BindingResult 或 Errors 对象中外，还会将所有校验结果保存到 “隐含模型”<br>
+在 JSP 页面上可通过 <form:errors path=“userName”> 自动获取错误信息并显示<br>
+
+修改input.jsp:
+```
+	<form:form action="${pageContext.request.contextPath }/emp" method="POST" modelAttribute="employee">
+		
+		<c:if test="${employee.id == null }">
+			<!-- path属性对应于html表单标签的name属性值 -->
+			LastName:<form:input path="lastName"/>
+			<form:errors path="lastName"></form:errors>
+		</c:if>
+		<c:if test="${employee.id != null }">
+			<form:hidden path="id"/>
+			<!-- Spring的form标签强制表单回显，所以form里面的path属性必须写modelAttribute所写对象拥有的属性 -->
+		</c:if>
+		<br>
+		
+		Email:<form:input path="email"/>
+		<form:errors path="email"></form:errors>
+		<br>
+		
+		<%
+			Map<String, String> genders = new HashMap();
+			genders.put("1", "Male");
+			genders.put("0", "Female");
+			
+			request.setAttribute("genders", genders);
+		%>
+		Gender:
+		<br>
+		<form:radiobuttons path="gender" items="${genders }" delimiter="<br>"/>
+		<br>
+		
+		department:<form:select path="department.id" items="${departments }"
+			itemLabel="departmentName" itemValue="id"></form:select>
+		<br>
+		
+		Birth:<form:input path="birth"/>
+		<form:errors path="birth"></form:errors>
+		<br>
+		
+		Salary:<form:input path="salary"/>
+		<br>
+		<input type="submit" value="submit"/>
+	</form:form>
+```
+
+### 运行:
+![图片无法加载](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/er1.png)
+
+### 6)、错误提示消息国际化
+这里其实我们可以自定义错误提示消息<br>
+#### 步骤1：创建i18n配置文件
+i18n_zh_CN.properties:
+```
+NotEmpty.employee.lastName=^^LastName\u4E0D\u80FD\u4E3A\u7A7A
+Email.employee.email=Email\u5730\u5740\u4E0D\u5408\u6CD5
+Past.employee.birth=Birth\u4E0D\u80FD\u662F\u5C06\u6765\u7684\u65F6\u95F4
+
+typeMismatch.employee.birth=Birth\u4E0D\u662F\u4E00\u4E2A\u65E5\u671F
+```
+
+注意上方右边的那些看着像乱码的东西，其实我们打进去的是中文，只是他自动显示成这样子<br>
+<br>
+错误消息在国际资源配置文件的写法:<br>
+&nbsp;&nbsp;&nbsp;以键值对的形式，值为提示的错误消息<br>
+&nbsp;&nbsp;&nbsp;键为检验注解作为前缀,请求域里的Bean属性名,校验的属性名<br>
+&nbsp;&nbsp;&nbsp;例:NotEmpty.employee.lastName=不能为空<br>
+<br>
+i18n_en_US.properties：
+```
+NotEmpty.employee.lastName=LastName can not be Empty
+Email.employee.email=Email is not valid
+Past.employee.birth=Birth must be the past
+
+
+typeMismatch.employee.birth=Your input is not a date
+```
+i18n.properties:
+```
+NotEmpty.employee.lastName=LastName\u4E0D\u80FD\u4E3A\u7A7A
+Email.employee.email=Email\u5730\u5740\u4E0D\u5408\u6CD5
+Past.employee.birth=Birth\u4E0D\u80FD\u662F\u5C06\u6765\u7684\u65F6\u95F4
+
+typeMismatch.employee.birth=Birth\u4E0D\u662F\u4E00\u4E2A\u65E5\u671F
+```
+这里顺便说一下，有三个错误代码是可以不在Bean的属性上标注就可以用的：
+```
+required：必要的参数不存在。如 @RequiredParam(“param1”) 标注了一个入参，但是该参数不存在
+typeMismatch：在数据绑定时，发生数据类型不匹配的问题
+methodInvocation：Spring MVC 在调用处理方法时发生了错误
+```
+
+#### 步骤2：在springmvc配置文件 配置国际化资源文件标签
+```
+	<!-- 配置国际化资源文件 -->
+	<bean id="messageSource"
+		class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basename" value="i18n"></property>	
+	</bean>
+```
+
+#### 运行
+注意：此时我将浏览器语言环境改为了英语(en_US)<br>
+![图片无法加载]()
 
