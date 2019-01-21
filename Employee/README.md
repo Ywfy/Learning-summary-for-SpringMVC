@@ -530,8 +530,8 @@ list.jsp:
 ```
 
 ## 运行
-点击delete
-![图片无法加载](https://github.com/Ywfy/Learning-summary-for-SpringMVC/tree/master/Employee/img)<br>
+点击delete<br>
+![图片无法加载](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/all.png)<br>
 <br>
 
 # 给员工添加出生日期属性 和 薪水 属性
@@ -539,8 +539,13 @@ list.jsp:
 而且字符串到Date的转化肯定要涉及到字符串的格式问题，什么格式的String能满足要求？<br>
 若我们输入的String格式不合格怎么办？要有数据检验<br>
 其实前面的LastName、Email等也都需要数据校验，不然LastName给个$ ,Email给个1 ，那肯定是不合理的。<br>
-
-
-
+<br>
+我们按照功能流程来:<br>
+## 1、数据检验 & 字符串格式化
+* 实际上Java 为 Bean 数据合法性校验提供了标准框架JSR303
+* JSR 303 通过在 Bean 属性上标注类似于 @NotNull、@Max 等标准的注解指定校验规则，并通过标准的验证接口对 Bean 进行验证<br>
+![图片无法加载](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/jsr303.jpg)<br><br>
+* JSR303只是一个标准，Hibernate Validator 是 JSR 303 的一个参考实现,除支持所有标准的校验注解外，它还支持以下的扩展注解<br>
+![图片无法加载](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/ha.png)<br><br>
 
 
