@@ -497,6 +497,7 @@ list.jsp:
 ![无法加载图片](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/xgb.png)<br>
 修改信息后，点击Submit<br>
 ![无法加载图片](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/xga.png)<br>
+<br>
 
 # 添加删除功能
 之前的delete超链接同样只是一个摆设，我们来实现它<br>
@@ -540,8 +541,136 @@ list.jsp:
 若我们输入的String格式不合格怎么办？要有数据检验<br>
 其实前面的LastName、Email等也都需要数据校验，不然LastName给个$ ,Email给个1 ，那肯定是不合理的。<br>
 <br>
-我们按照功能流程来:<br>
-## 1、数据检验 & 字符串格式化
+
+<strong>数据绑定流程</strong>:
+![图片无法加载](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/%E6%95%B0%E6%8D%AE%E7%BB%91%E5%AE%9A%E6%B5%81%E7%A8%8B.png)<br>
+
+## 1、类型转换器
+SpringMVC已经内置了很多类型转换器，可完成大多数Java类型的转换工作：<br>
+只有涉及到我们自己创建的类时才考虑使用自定义类型转换器。<br>
+这里我们提出一个需求，给一个输入框，输入lastname-email-gender-depaerment.id 例如：GG-gg@aiguigu.com-0-105，来创建并保存Employee对象<br>
+
+在input.jsp添加:
+```
+	<form action="emp/testConversionServiceConverer" method="POST"> 
+		<!-- lastname-email-gender-depaerment.id 例如：GG-gg@aiguigu.com-0-105-->
+		Employee:<input type="text" name="employee"/>
+		<input type="submit" value="submit"/>
+	</form>
+```
+创建对应的处理方法:
+```
+@RequestMapping(value="emp/testConversionServiceConverer", method=RequestMethod.POST)
+public String testConverter(@RequestParam("employee") Employee employee) {
+	System.out.println("save: " + employee);
+	employeeDao.save(employee);
+	return "redirect:/emps";
+}
+```
+@RequestParam("employee")取出的是一个String，然而我们的参数却是Employee，这里就需要一个自定义类型转换器来转换<br>
+
+
+### 自定义类型转换器
+#### 1)、实现Converter<S, T>接口
+```
+package com.atguigu.springmvc.converters;
+
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.stereotype.Component;
+
+import com.atguigu.springmvc.crud.entities.Department;
+import com.atguigu.springmvc.crud.entities.Employee;
+
+@Component
+public class EmployeeConverter implements Converter<String, Employee> {
+
+	@Override
+	public Employee convert(String source) {
+		// TODO Auto-generated method stub
+		if(source != null) {
+			//GG-gg@aiguigu.com-0-105
+			String[] vals = source.split("-");
+			if(vals != null && vals.length == 4) {
+				String lastName = vals[0];
+				String email = vals[1];
+				Integer gender = Integer.parseInt(vals[2]);
+				Department department = new Department();
+				department.setId(Integer.parseInt(vals[3]));
+				
+				Employee employee = new Employee(null, lastName, email, gender, department);
+				System.out.println(source + " convert " + employee);
+				return employee;
+			}
+		}
+		return null;
+	}	
+
+}
+```
+
+#### 2)、在SpringMVC配置文件配置ConversionService
+```
+ 	<!-- 配置时一定要加上 -->
+	<mvc:annotation-driven conversion-service="conversionService"></mvc:annotation-driven>
+	
+	<!-- 配置ConversionService -->
+	<!-- org.springframework.format.support.FormattingConversionServiceFactoryBean
+		可以使我们既可以使用自定义转换器，也可以使用spring自带的格式化服务	
+	 -->
+	<bean id="conversionService"
+		class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+		<property name="converters">
+			<set>
+				<ref bean="employeeConverter"/>
+			</set>
+		</property>
+	</bean>
+```
+
+## 运行
+![无法加载图片](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/za.png)<br>
+![无法加载图片](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/zar.png)<br>
+
+## 扩展：@InitBinder
+@InitBinder用于在@Controller中标注于方法上，表示为当前控制器注册一个属性编辑器，只对当前的Controller有效。<br>
+@InitBinder标注的方法必须有一个参数WebDataBinder。所谓的属性编辑器可以理解就是帮助我们完成参数绑定。<br>
+@InitBinder很有用，我们这里先不细讲，用一个例子简单演示一下<br>
+在EmployeeHanler下添加：
+```
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+		binder.setDisallowedFields("lastName");
+	}
+```
+运行效果:<br>
+![无法加载图片](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/b.png)<br>
+这里我是有输入LastName的，但是最终却并没有被绑定保存。<br>
+<br>
+
+
+## 字符串格式化
+其实非常简单，两步搞定<br>
+### 第一步：全局配置\<mvc:annotation-driven></mvc:annotation-driven>
+这里前面已经配了，就不用了
+### 第二步：在Bean需要的属性上加上注解
+修改Employee：
+```
+	@DateTimeFormat(pattern="yyyy-MM-dd")
+	private Date birth;
+	
+	@NumberFormat(pattern="#,###,###.#")
+	private Float salary;
+```
+## 运行
+输入<br>
+日期为2015-12-12<br>
+薪水为1,234,567.8<br>
+```
+save: Employee [id=null, lastName=null, email=gg@789.com, gender=0, department=Department [id=102, departmentName=null], birth=Sat Dec 12 00:00:00 CST 2015, salary=1234567.8]
+```
+<br>
+
+## 数据校验
 * 实际上Java 为 Bean 数据合法性校验提供了标准框架JSR303
 * JSR 303 通过在 Bean 属性上标注类似于 @NotNull、@Max 等标准的注解指定校验规则，并通过标准的验证接口对 Bean 进行验证<br>
 ![图片无法加载](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/jsr303.jpg)<br><br>
@@ -555,7 +684,7 @@ hibernate-validator-5.0.0.CR2.jar
 hibernate-validator-annotation-processor-5.0.0.CR2.jar
 ```
 
-### 2)、在SpringMVC配置文件中添加<mvc:annotation-driven></mvc:annotation-driven>
+### 2)、在SpringMVC配置文件中添加\<mvc:annotation-driven></mvc:annotation-driven>
 ### 3)、需要在bean的属性上添加对应的注解
 ```
 public class Employee {
@@ -594,7 +723,7 @@ BindingResult类型对象有以下常用方法：
 	
 修改EmployeeHandler:
 ```
-@RequestMapping(value= {"/emp"}, method=RequestMethod.POST)
+	@RequestMapping(value= {"/emp"}, method=RequestMethod.POST)
 	public String save(@Valid Employee employee, BindingResult result,
 			Map<String, Object> map) {
 		System.out.println("save: " + employee);
@@ -720,5 +849,8 @@ methodInvocation：Spring MVC 在调用处理方法时发生了错误
 
 #### 运行
 注意：此时我将浏览器语言环境改为了英语(en_US)<br>
-![图片无法加载]()
+![图片无法加载](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/er2.png)<br>
+![图片无法加载](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/er3.png)<br>
+
+
 
