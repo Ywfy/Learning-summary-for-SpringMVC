@@ -851,6 +851,77 @@ methodInvocation：Spring MVC 在调用处理方法时发生了错误
 注意：此时我将浏览器语言环境改为了英语(en_US)<br>
 ![图片无法加载](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/er2.png)<br>
 ![图片无法加载](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/er3.png)<br>
+<br>
+
+# JSON
+## 引入jar包
+```
+jackson-annotations-2.1.5.jar
+jackson-core-2.1.5.jar
+jackson-databind-2.1.5.jar
+```
+## 编写请求
+修改index.jsp
+```
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Insert title here</title>
+<script type="text/javascript" src="scripts/jquery-1.9.1.min.js"></script>
+<script type="text/javascript">
+	$(function(){
+		$("#testJson").click(function(){
+			var url = this.href;
+			var args = {};
+			$.post(url, args, function(data){
+				for(var i = 0; i < data.length; i++){
+					var id = data[i].id;
+					var lastName = data[i].lastName;
+					
+					alert(id + ": " + lastName);
+				}
+			});
+			return false;
+		})
+	})
+</script>
+</head>
+<body>
+	
+	<a href="emps">List All Employees</a>
+	<br><br>
+
+	<a href="testJson" id="testJson">Test Json</a>
+	<br><br>
+	
+	......
+```
+老司机继续开车，这里用JS来弹窗显示获取的所有Employee对象<br>
+
+## 编写目标方法，使其返回JSON对应的对象或集合,最后在目标方法上添加@ResponseBody注解
+```
+	@ResponseBody
+	@RequestMapping("/testJson")
+	public Collection<Employee> testJson() {
+		return employeeDao.getAll();
+	}
+```
+
+ ## 运行
+ 当点击Test Json超链接后，出现弹窗
+ ![无法加载图片]()
+
+## HttpMessageConverter原理
+![图片无法加载](https://github.com/Ywfy/Learning-summary-for-SpringMVC/blob/master/Employee/img/stm.png)<br>
+
+## HttpMessageConverter使用
+* 使用 @RequestBody / @ResponseBody 对处理方法进行标注
+* 使用 HttpEntity<T> / ResponseEntity<T> 作为处理方法的入参或返回值
+
+
 
 
 
