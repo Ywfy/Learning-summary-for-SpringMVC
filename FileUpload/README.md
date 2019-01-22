@@ -12,7 +12,7 @@ commons-io-2.0.jar
 	<property name="defaultEncoding" value="UTF-8"></property>
 	<!-- 以KB为单位 -->
 	<property name="maxUploadSize" value="1024000"></property>
- </bean>
+  </bean>
 ```
 ## 步骤3:写表单
 修改index.jsp
