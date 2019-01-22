@@ -117,6 +117,7 @@ public class SecondInterceptor implements HandlerInterceptor{
    <!-- 配置拦截器(不)作用的路径 -->
    <mvc:interceptor>
       <!-- <mvc:exclude-mapping path=""/> -->
+      
       <!-- 拦截器只作用于/emps -->
       <mvc:mapping path="/emps"/>
       <bean class="com.atguigu.springmvc.interceptors.SecondInterceptor"></bean>
