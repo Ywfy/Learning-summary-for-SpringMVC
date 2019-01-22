@@ -111,18 +111,18 @@ public class SecondInterceptor implements HandlerInterceptor{
 ```
 <mvc:interceptors>
 		
-    <!-- 配置自定义拦截器 -->
-		<bean class="com.atguigu.springmvc.interceptors.FirstInterceptor"></bean>
+   <!-- 配置自定义拦截器 -->
+   <bean class="com.atguigu.springmvc.interceptors.FirstInterceptor"></bean>
     
-    <!-- 配置拦截器(不)作用的路径 -->
-		<mvc:interceptor>
+   <!-- 配置拦截器(不)作用的路径 -->
+   <mvc:interceptor>
       <!-- <mvc:exclude-mapping path=""/> -->
       <!-- 拦截器只作用于/emps -->
-			<mvc:mapping path="/emps"/>
-			<bean class="com.atguigu.springmvc.interceptors.SecondInterceptor"></bean>
-		</mvc:interceptor>
+      <mvc:mapping path="/emps"/>
+      <bean class="com.atguigu.springmvc.interceptors.SecondInterceptor"></bean>
+   </mvc:interceptor>
 		
-	</mvc:interceptors>
+</mvc:interceptors>
 ```
 
 根据拦截器的配置，当访问/emps时，两个拦截器都会生效，这时执行顺序是怎样的呢？
